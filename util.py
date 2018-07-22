@@ -9,6 +9,8 @@ import numpy as np
 import cv2 
 import matplotlib.pyplot as plt
 from bbox import bbox_iou
+import sys
+import os
 
 def count_parameters(model):
     return sum(p.numel() for p in model.parameters())
@@ -217,6 +219,7 @@ Created on Sat Mar 24 00:12:16 2018
 @author: ayooshmac
 """
 
+
 def predict_transform_half(prediction, inp_dim, anchors, num_classes, CUDA = True):
     batch_size = prediction.size(0)
     stride =  inp_dim // prediction.size(2)
@@ -379,3 +382,82 @@ def write_results_half(prediction, confidence, num_classes, nms = True, nms_conf
                 output = torch.cat((output,out))
     
     return output
+
+
+class FileHandle:
+
+    def __init__(self, path_to_dataset, buffer_size):
+        self.path_to_file = path_to_dataset
+        self.buffer_size = buffer_size
+        self.frame_buffer = [i for i in range(buffer_size)]
+        self.buffer_position = 0
+        self.file_line = ''
+        self.file_object = None
+        self.frame_count = 0
+        self.folder_count = 0
+        self.line_buffer = []
+        self.frame_number = []
+        self.frame_count = 0
+
+        if os.path.isdir(path_to_dataset):
+            subfolders = [f.path for f in os.scandir(path_to_dataset) if f.is_dir()]
+            subfolders.sort()
+            if len(subfolders) is not 0:
+                self.folder_count = int(subfolders[-1].split('/')[2])
+        else:
+            os.makedirs('./dataset')
+
+    def __add_to_buffer(self, frame, data):
+
+        if self.buffer_position < self.buffer_size:
+            self.frame_buffer[self.buffer_position] = frame
+            self.buffer_position += 1
+            for idx, line in enumerate(data):
+                if idx == 0:
+                    self.file_line = line
+                else:
+            #        print(line)
+                    self.file_line = self.file_line+',' + line
+            # print(self.file_line)
+            if len(self.line_buffer) < self.buffer_size:
+                self.line_buffer.append(self.file_line)
+                self.frame_number.append(self.frame_count)
+            else:
+                self.frame_number = []
+                self.line_buffer = []
+                self.line_buffer.append(self.file_line)
+                self.frame_number.append(self.frame_count)
+
+            self.file_line = ''
+        else:
+            self.buffer_position = 0
+            self.file_line = ''
+            self.__write_to_file()
+
+    def __write_to_file(self):
+
+        folder_path = os.path.abspath(self.path_to_file)+'/'+str(self.folder_count+1)+'/'
+        print(folder_path)
+        if not os.path.isdir(folder_path):
+            os.mkdir(folder_path)
+        path = []
+
+        for idx, image in enumerate(self.frame_buffer):
+            temp = str(self.frame_number[idx])+'.jpg'
+            path.append(os.path.join(folder_path, temp))
+            print(path[idx])
+            cv2.imwrite(path[idx], image)
+
+        self.file_object = open(folder_path+'/'+'labels.txt', 'a+')
+        for idx, line in enumerate(self.line_buffer):
+            temp = path[idx] + ',' + line + '\n'
+            self.file_object.write(temp)
+        self.file_object.close()
+
+    def add_frame(self, frame, data):
+        self.frame_count += 1
+        clean_data = []
+        for item in data:
+            if item is not None:
+                clean_data.append(item)
+        self.__add_to_buffer(frame, clean_data)
