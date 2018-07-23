@@ -103,7 +103,7 @@ def arg_parse():
                         default="yolov3.weights", type=str)
     parser.add_argument("--reso", dest='reso', help=
                         "Input resolution of the network. Increase to increase accuracy. Decrease to increase speed",
-                        default="64", type=str)
+                        default="416", type=str)
     parser.add_argument("--class", dest='class_number', help=
                         "input .txt file with class number from coco dataset that you want to output",
                         default="data/classNumbers.txt", type=str)
@@ -216,13 +216,11 @@ if __name__ == '__main__':
             #    if key & 0xFF == ord('q'):
             #        break
 
+                print("This is frames: {0}".format(frames))
                 frames += 1
                 print("FPS of the video is {:5.2f}".format(frames / (time.time() - start)))
 
             else:
                 break
-            print("This is frames: {0}".format(frames))
-            if frames % 4 == 0:
-                count += 1
-                break
+        output_handler.dump_buffer()
         cap.release()

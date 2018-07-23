@@ -476,8 +476,8 @@ class FileHandle:
         for item in data:
             if item is not None:
                 clean_data.append(item)
-        if clean_data is not []:
+        if len(clean_data) is not 0:
             self.__add_to_buffer(frame, clean_data)
 
-    def __del__(self):
+    def dump_buffer(self):
         self.__write_to_file()
