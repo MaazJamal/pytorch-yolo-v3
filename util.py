@@ -220,7 +220,7 @@ Created on Sat Mar 24 00:12:16 2018
 """
 
 
-def predict_transform_half(prediction, inp_dim, anchors, num_classes, CUDA = True):
+def predict_transform_half(prediction, inp_dim, anchors, num_classes, CUDA=True):
     batch_size = prediction.size(0)
     stride =  inp_dim // prediction.size(2)
 
@@ -273,7 +273,7 @@ def predict_transform_half(prediction, inp_dim, anchors, num_classes, CUDA = Tru
     return prediction
 
 
-def write_results_half(prediction, confidence, num_classes, nms = True, nms_conf = 0.4):
+def write_results_half(prediction, confidence, num_classes, nms=True, nms_conf=0.4):
     conf_mask = (prediction[:,:,4] > confidence).half().unsqueeze(2)
     prediction = prediction*conf_mask
     
@@ -384,6 +384,19 @@ def write_results_half(prediction, confidence, num_classes, nms = True, nms_conf
     return output
 
 
+def video_file_parser(path):
+
+    if os.path.isdir(path):
+            files = []
+            for f in os.listdir(path):
+                if os.path.isfile(os.path.join(path, f)):
+                    files.append(os.path.join(path, f))
+            files.sort()
+            return files
+    else:
+        return []
+
+
 class FileHandle:
 
     def __init__(self, path_to_dataset, buffer_size):
@@ -404,6 +417,7 @@ class FileHandle:
             subfolders.sort()
             if len(subfolders) is not 0:
                 self.folder_count = int(subfolders[-1].split('/')[2])
+                print("This is folder count: {0}".format(self.folder_count))
         else:
             os.makedirs('./dataset')
 
@@ -430,9 +444,9 @@ class FileHandle:
 
             self.file_line = ''
         else:
-            self.buffer_position = 0
             self.file_line = ''
             self.__write_to_file()
+            self.buffer_position = 0
 
     def __write_to_file(self):
 
@@ -443,15 +457,17 @@ class FileHandle:
         path = []
 
         for idx, image in enumerate(self.frame_buffer):
-            temp = str(self.frame_number[idx])+'.jpg'
-            path.append(os.path.join(folder_path, temp))
-            print(path[idx])
-            cv2.imwrite(path[idx], image)
+            if idx < self.buffer_position:
+                temp = str(self.frame_number[idx])+'.jpg'
+                path.append(os.path.join(folder_path, temp))
+                print(path[idx])
+                cv2.imwrite(path[idx], image)
 
         self.file_object = open(folder_path+'/'+'labels.txt', 'a+')
         for idx, line in enumerate(self.line_buffer):
-            temp = path[idx] + ',' + line + '\n'
-            self.file_object.write(temp)
+            if idx <self.buffer_position:
+                temp = path[idx] + ',' + line + '\n'
+                self.file_object.write(temp)
         self.file_object.close()
 
     def add_frame(self, frame, data):
@@ -460,4 +476,8 @@ class FileHandle:
         for item in data:
             if item is not None:
                 clean_data.append(item)
-        self.__add_to_buffer(frame, clean_data)
+        if clean_data is not []:
+            self.__add_to_buffer(frame, clean_data)
+
+    def __del__(self):
+        self.__write_to_file()
