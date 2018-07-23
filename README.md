@@ -1,5 +1,8 @@
 # A PyTorch implementation of a YOLO v3 Object Detector
 
+Whats diffent in this Repo?
+  This repo modifies the video_demo.py so that the the demo now loads files and outputs frames and label and coordinates of labels to a separate file. This can be used to label and annotate a dataset using the pretrained coco weights.
+  
 [UPDATE] : This repo serves as a driver code for my research. I just graduated college, and am very busy looking for research internship / fellowship roles before eventually applying for a masters. I won't have the time to look into issues for the time being. Thank you.
 
 
