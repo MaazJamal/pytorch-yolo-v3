@@ -108,7 +108,7 @@ def arg_parse():
                         "input .txt file with class number from coco dataset that you want to output",
                         default="data/classNumbers.txt", type=str)
     parser.add_argument("--buffer", dest='bufferSize', help=
-                        "Size of the buffer to store the file to memory", default=2, type=int)
+                        "Size of the buffer to store the file to memory", default=100, type=int)
     parser.add_argument("--savepath", dest='savePath', help=
                         'The place where you want to save the dataset',
                         default='./dataset', type=str)
